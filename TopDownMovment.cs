@@ -1,38 +1,46 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 public class TopDownController : MonoBehaviour
 {
     public float moveSpeed = 5f;
     public float zoomSpeed = 10f;
-    public float minY = 5f; // Minimum altitude
-    public float maxY = 50f; // Maximum altitude
+    public float minY = 5f; // Minimum altitude for the camera
+    public float maxY = 20f; // Maximum altitude for the camera
+
+    private Rigidbody rb;
+    private Camera cam;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody>(); // Ensure the player capsule has a Rigidbody component
+        cam = GetComponentInChildren<Camera>(); // Automatically finds the Camera component in child objects
+    }
 
     void Update()
     {
-        // Camera movement on X and Z axes
-        float horizontal = Input.GetAxisRaw("Horizontal"); //is A/D keys
-        float vertical = Input.GetAxisRaw("Vertical"); //is W/S keys
-        Vector3 movement = new Vector3(horizontal, 0f, vertical);
-        
-        transform.position += movement * moveSpeed * Time.deltaTime;
+        // Capture movement input
+        float horizontal = Input.GetAxisRaw("Horizontal");
+        float vertical = Input.GetAxisRaw("Vertical");
+        Vector3 movement = new Vector3(horizontal, 0, vertical).normalized * moveSpeed;
 
-        // Camera zoom - move along Y-axis on scroll
+        // Apply movement in FixedUpdate for physics calculation
+        rb.velocity = new Vector3(movement.x, rb.velocity.y, movement.z);
+
+        // Camera zoom - adjust Y position based on scroll, directly affecting the camera's transform
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         MoveCameraOnYAxis(scroll);
     }
 
     private void MoveCameraOnYAxis(float scrollAmount)
     {
-        // Calculate new Y position based on scroll input
-        float newY = transform.position.y - scrollAmount * zoomSpeed;
-        newY = Mathf.Clamp(newY, minY, maxY); // Ensure Y stays within bounds
-        
-        // Update camera position
-        transform.position = new Vector3(transform.position.x, newY, transform.position.z);
+        // Ensure the camera does not move below the minY or above the maxY
+        Vector3 cameraPosition = cam.transform.position;
+        float newY = Mathf.Clamp(cameraPosition.y - scrollAmount * zoomSpeed, minY, maxY);
+        cam.transform.position = new Vector3(cameraPosition.x, newY, cameraPosition.z);
     }
 }
+
 
 
 
